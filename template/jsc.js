@@ -40,6 +40,10 @@ function jsc(code){
 	function isOperator(c) {
 		// might need to do something special here for +=, -=, ==, ===, similar to strings
 		var ct = currentToken + c;
+		if(!inOperator){
+			ct = c;
+		}
+		// This breaks operators after variables with no space - need to check if already in operator.
 		return '+'.indexOf(ct) == 0 || '-'.indexOf(ct) == 0 || '='.indexOf(ct) == 0;
 	}
 
