@@ -1,5 +1,5 @@
-var p = 'var a = 1 + 2;\r\n"test string";\r\nfunction test(t) {\r\n	return t;\r\n}\r\ntest(a);\r\na+=2;';
-
+var p = 'var a = 1 + 2;\r\n"test string";\r\nfunction test(t) {\r\n	return t;\r\n}\r\ntest(a);\r\na+=2;\r\nvar x = a===3;';
+//var p = 'var x = a===3;';
 function tokensToAsm(tokens){
 	for(var i = 0; i < tokens.length; i++){
 
@@ -22,7 +22,10 @@ function jsc(code){
 	}
 
 	function isWhiteSpace(c) {
-		return c == ' ' || c == '\n' || c == '\r' || c == '	';
+		return c == ' ' || 
+			c == '\n' ||
+			c == '\r' || 
+			c == '	';
 	}
 
 	function isStringTerminator(c) {
@@ -39,12 +42,26 @@ function jsc(code){
 
 	function isOperator(c) {
 		// might need to do something special here for +=, -=, ==, ===, similar to strings
-		var ct = currentToken + c;
-		if(!inOperator){
+		var ct;
+		if(inOperator){
+			ct = currentToken + c;
+		} else {
 			ct = c;
 		}
+
 		// This breaks operators after variables with no space - need to check if already in operator.
-		return '+'.indexOf(ct) == 0 || '-'.indexOf(ct) == 0 || '='.indexOf(ct) == 0;
+		var res =  
+			'+'.indexOf(ct) == 0 || 
+			'-'.indexOf(ct) == 0 || 
+			'='.indexOf(ct) == 0 ||
+			'+='.indexOf(ct) == 0 ||
+			'==='.indexOf(ct) == 0 ||
+			'>'.indexOf(ct) == 0 ||
+			'>='.indexOf(ct) == 0 ||
+			'<'.indexOf(ct) == 0 ||
+			'<='.indexOf(ct) == 0;
+
+		return res;
 	}
 
 	function addToken(){
@@ -53,8 +70,8 @@ function jsc(code){
 				text: currentToken,
 				type: currentType
 			});
-			currentToken = '';
 		}
+		currentToken = '';
 	}
 
 	for(var i = 0; i<code.length; i++){
@@ -66,23 +83,6 @@ function jsc(code){
 			} else {
 				currentToken += c;
 			}
-		} else if(inOperator) {
-			if(isOperator(c)){
-				console.log('operator ' + c);
-				currentToken += c;
-			} else {
-				console.log('leaving operator');
-				addToken();
-				inOperator = false;
-				currentToken = c;
-				currentType = 'misc';
-			}
-		} else if(isOperator(c)) {
-			console.log('operator ' + c);
-			addToken();
-			currentToken += c;
-			inOperator = true;
-			currentType = 'operator';
 		} else if(isWhiteSpace(c)){
 			addToken();
 		} else if(isSyntax(c)) {
@@ -91,6 +91,20 @@ function jsc(code){
 				text: c,
 				type: 'syntax'
 			});
+		} else if(inOperator) {
+			if(isOperator(c)){
+				currentToken += c;
+			} else {
+				addToken();
+				inOperator = false;
+				currentToken = c;
+				currentType = 'misc';
+			}
+		} else if(isOperator(c)) {
+			addToken();
+			currentToken += c;
+			inOperator = true;
+			currentType = 'operator';
 		} else if(isStringTerminator(c)){
 			inString = true;
 			currentType = 'string';
